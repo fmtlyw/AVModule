@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+
+    <TextView
+        android:clickable="true"
+        android:onClick="onStartPlay"
+        android:padding="10dp"
+        android:textColor="@color/src_c4"
+        android:background="@color/src_c50"
+        android:text="开始直播"
+        android:gravity="center"
+        android:layout_margin="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:clickable="true"
+        android:onClick="onStopPlay"
+        android:padding="10dp"
+        android:textColor="@color/src_c4"
+        android:background="@color/src_c50"
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:id="@+id/sample_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="结束直播" />
+
+</LinearLayout>
