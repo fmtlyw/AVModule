@@ -2,7 +2,7 @@
 #include <string>
 #include "librtmp/rtmp.h"
 #include <android/log.h>
-#define LOGI(...) _android_log_print(ANDROID_LOG_INFO,"lyw",_VA_ARGS_)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO,"lyw",__VA_ARGS__)
 
 //相当于javabeen
 typedef struct {
@@ -54,7 +54,7 @@ Java_com_lyw_avmodule_ScreenLive_connect(JNIEnv *env, jobject thiz, jstring url_
     //设置URL
     RTMP_SetupURL(live->rtmp, (char *) url);
     RTMP_EnableWrite(live->rtmp);
-    //LOGI("rtmp_connect");
+    LOGI("rtmp_connect");
     //开始链接
     RTMP_Connect(Live.rtmp, 0);
     env->ReleaseStringUTFChars(url_, url);
