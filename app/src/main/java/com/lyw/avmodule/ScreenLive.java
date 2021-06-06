@@ -17,7 +17,7 @@ import static android.app.Activity.RESULT_OK;
  *
  * @author lyw
  */
-public class ScreenLive implements Runnable {
+public class ScreenLive extends Thread {
 
     private MediaProjection mMediaProjection;
 
@@ -60,6 +60,7 @@ public class ScreenLive implements Runnable {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 200 && resultCode == RESULT_OK) {
             mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
+            start();
         }
     }
 
@@ -81,30 +82,30 @@ public class ScreenLive implements Runnable {
             return;
         }
 
-        isLiving = true;
-        videoCodeC = new VideoCodeC(this);
-        videoCodeC.startLive(mMediaProjection);
-
-
-        //循环取数据
-        while (isLiving) {
-            RTMPPackage rtmpPackage = null;
-            try {
-                rtmpPackage = mQueue.take();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-
-            if (rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
-                sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer().length, rtmpPackage.getTms());
-            }
-        }
+//        isLiving = true;
+//        videoCodeC = new VideoCodeC(this);
+//        videoCodeC.startLive(mMediaProjection);
+//
+//
+//        //循环取数据
+//        while (isLiving) {
+//            RTMPPackage rtmpPackage = null;
+//            try {
+//                rtmpPackage = mQueue.take();
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//
+//
+////            if (rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
+////                sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer().length, rtmpPackage.getTms());
+////            }
+//        }
 
     }
 
 
-    private native boolean sendData(byte[] data,int len,long tms);
+//    private native boolean sendData(byte[] data,int len,long tms);
 
     private native boolean connect(String url);
 }

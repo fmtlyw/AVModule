@@ -124,8 +124,6 @@ static int clk_tck;
 
 #ifdef CRYPTO
 #include "handshake.h"
-#include "../../../../../../AndroidSDK/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/malloc.h"
-
 #endif
 
 uint32_t
