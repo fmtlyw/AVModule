@@ -4,16 +4,18 @@ import android.app.Notification;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * 功能描述:视频采集并编码
+ * 功能描述:视频采集并编码（编码层---生产者）
  * Created on 2021/6/1.
  *
  * @author lyw
@@ -48,26 +50,28 @@ public class VideoCodeC extends Thread{
         //创建一个编码器
         try {
             mMediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
-            MediaFormat videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 640, 480);
+            MediaFormat videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 720, 1080);
+            videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             //码流
             videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,500_000);
             //帧数
-            videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,20);
+            videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE,15);
             //关键帧
             videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL,2);
+
 
             //CONFIGURE_FLAG_ENCODE表示编码操作
             mMediaCodec.configure(videoFormat,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE);
 
             //注意：mMediaCodec创建的画布会自动把mMediaProjection录制的数据进行编码
             Surface mSurface = mMediaCodec.createInputSurface();
-            mVirtualDisplay = mMediaProjection.createVirtualDisplay("lyw",640,480,1, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,mSurface,null,null);
+            mVirtualDisplay = mMediaProjection.createVirtualDisplay("lyw",720,1080,1, DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,mSurface,null,null);
 
             //开始执行 run()方法
             start();
 
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
     }
 
@@ -76,6 +80,8 @@ public class VideoCodeC extends Thread{
     public void run() {
         //开始编码
         mMediaCodec.start();
+        isLiving = true;
+        Log.d("lyw","run-->开始编码");
 
         //取数据
 
@@ -95,6 +101,8 @@ public class VideoCodeC extends Thread{
 
             //99号技师有没有空
             int index = mMediaCodec.dequeueOutputBuffer(bufferInfo, 10);
+
+            Log.d("lyw","run-->开始编码--index--》"+index);
             //有空带出去
             if (index >= 0) {
                 ByteBuffer outputBuffer = mMediaCodec.getOutputBuffer(index);

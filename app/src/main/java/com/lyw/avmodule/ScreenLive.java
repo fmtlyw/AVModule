@@ -12,7 +12,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static android.app.Activity.RESULT_OK;
 
 /**
- * 功能描述:屏幕管理
+ * 生产者消费者模式
+ * 功能描述:屏幕管理（传输层---消费者）
  * Created on 2021/6/1.
  *
  * @author lyw
@@ -32,6 +33,9 @@ public class ScreenLive extends Thread {
 
     private VideoCodeC videoCodeC;
 
+    static {
+        System.loadLibrary("native-lib");
+    }
 
     /**
      * 开始直播
@@ -65,13 +69,15 @@ public class ScreenLive extends Thread {
     }
 
 
+    /**
+     * 生产者入口
+     * @param rtmpPackage
+     */
     public void addPackage(RTMPPackage rtmpPackage) {
         if (!isLiving) {
             return;
         }
         mQueue.add(rtmpPackage);
-
-
     }
 
 
@@ -81,31 +87,27 @@ public class ScreenLive extends Thread {
             Log.d("lyw","run-->链接服务器失败");
             return;
         }
+        isLiving = true;
+        videoCodeC = new VideoCodeC(this);
+        videoCodeC.startLive(mMediaProjection);
 
-//        isLiving = true;
-//        videoCodeC = new VideoCodeC(this);
-//        videoCodeC.startLive(mMediaProjection);
-//
-//
-//        //循环取数据
-//        while (isLiving) {
-//            RTMPPackage rtmpPackage = null;
-//            try {
-//                rtmpPackage = mQueue.take();
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//
-//
-////            if (rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
-////                sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer().length, rtmpPackage.getTms());
-////            }
-//        }
 
+        //循环取数据
+        while (isLiving) {
+            RTMPPackage rtmpPackage = null;
+            try {
+                rtmpPackage = mQueue.take();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
+                sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer().length, rtmpPackage.getTms());
+            }
+        }
     }
 
 
-//    private native boolean sendData(byte[] data,int len,long tms);
+    private native boolean sendData(byte[] data,int len,long tms);
 
     private native boolean connect(String url);
 }
