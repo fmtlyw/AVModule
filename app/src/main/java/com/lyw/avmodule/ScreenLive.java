@@ -33,10 +33,6 @@ public class ScreenLive extends Thread {
 
     private VideoCodeC videoCodeC;
 
-    static {
-        System.loadLibrary("native-lib");
-    }
-
     /**
      * 开始直播
      *

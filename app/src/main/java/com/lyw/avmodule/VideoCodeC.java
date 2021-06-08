@@ -39,6 +39,7 @@ public class VideoCodeC extends Thread{
 
     private ScreenLive mScreenLive;
 
+
     public VideoCodeC(ScreenLive screenLive) {
         this.mScreenLive = screenLive;
     }
@@ -50,7 +51,7 @@ public class VideoCodeC extends Thread{
         //创建一个编码器
         try {
             mMediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
-            MediaFormat videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 720, 1080);
+            MediaFormat videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 640, 480);
             videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             //码流
             videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,500_000);
@@ -65,7 +66,7 @@ public class VideoCodeC extends Thread{
 
             //注意：mMediaCodec创建的画布会自动把mMediaProjection录制的数据进行编码
             Surface mSurface = mMediaCodec.createInputSurface();
-            mVirtualDisplay = mMediaProjection.createVirtualDisplay("lyw",720,1080,1, DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,mSurface,null,null);
+            mVirtualDisplay = mMediaProjection.createVirtualDisplay("lyw",640,480,1, DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,mSurface,null,null);
 
             //开始执行 run()方法
             start();
@@ -102,15 +103,17 @@ public class VideoCodeC extends Thread{
             //99号技师有没有空
             int index = mMediaCodec.dequeueOutputBuffer(bufferInfo, 10);
 
-            Log.d("lyw","run-->开始编码--index--》"+index);
             //有空带出去
             if (index >= 0) {
                 ByteBuffer outputBuffer = mMediaCodec.getOutputBuffer(index);
 
                 //转成byte字节数据，再封装成rtmp包
                 byte[] outData = new byte[bufferInfo.size];
-
                 outputBuffer.get(outData);
+
+                //把h264流数据写入文件，可通过ffmpeg的ffplay或者vlc播放
+                //FileUtils.writeBytes(outData);
+
                 if (startTime == 0) {
                     startTime = bufferInfo.presentationTimeUs / 1000;
                 }

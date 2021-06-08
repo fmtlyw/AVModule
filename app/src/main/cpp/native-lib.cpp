@@ -48,7 +48,6 @@ RTMPPacket *createVideoPackage(Live *live) {
 
     packet->m_body[i++] = 0x00;
     packet->m_body[i++] = 0x00;
-    packet->m_body[i++] = 0x00;
 
     packet->m_body[i++] = 0x01;
 
@@ -61,12 +60,11 @@ RTMPPacket *createVideoPackage(Live *live) {
     packet->m_body[i++] = 0xE1;
 
 
-    packet->m_body[i++] = (live->sps_len >> 8) & 0xFF;
-
+    packet->m_body[i++] = (live->sps_len >> 8) & 0xff;
     packet->m_body[i++] = live->sps_len & 0xff;
-
     //拷贝sps的内容
     memcpy(&packet->m_body[i], live->sps, live->sps_len);
+
     i += live->sps_len;
     packet->m_body[i++] = 0x01;
 
@@ -77,7 +75,6 @@ RTMPPacket *createVideoPackage(Live *live) {
 
     packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
     packet->m_nBodySize = body_size;
-
     packet->m_nChannel = 0x04;
     packet->m_nTimeStamp = 0;
     packet->m_hasAbsTimestamp = 0;
@@ -103,7 +100,6 @@ RTMPPacket *createVideoPackage(int8_t *buf, int len, long tms, Live *live) {
         packet->m_body[0] = 0x27;
         LOGI("rtmp_发送非关键帧 data");
     }
-
 
     //固定大小
     packet->m_body[1] = 0x01;
@@ -146,7 +142,7 @@ int sendPacket(RTMPPacket *pPacket) {
 
 
 //    分隔符                     sps                                 pps
-//00 00 00 01 67     64001FACB405A0500290506060606DBA135    00 00 00 00 01 68 FF06F2C0
+//00 00 00 01 67     64001FACB405A0500290506060606DBA135    00 00 00 00 1 68 FF06F2C0
 void prepareVideo(int8_t *data, int len, Live *live) {
     for (int i = 0; i < len; i++) {
         //防止越界
@@ -170,7 +166,7 @@ void prepareVideo(int8_t *data, int len, Live *live) {
                     //rtmp协议
 
                     memcpy(live->pps, data + 4 + live->sps_len + 4, live->pps_len);
-                    LOGI("rtmp_sps:%d  pps:%d", live->sps_len, live->pps_len);
+                    LOGI("rtmpsps:%d  pps:%d", live->sps_len, live->pps_len);
                     break;
                 }
             }
@@ -183,25 +179,22 @@ int sendVideo(int8_t *buf, int len, long tms) {
 
     //判断帧类型
     int type = buf[4] & 0x1F;
+
     //sps、pps
     if (buf[4] == 0x67) {
-        if (live && (!live->pps || !live->sps)) {
-            LOGI("rtmp_prepareVideo");
-
+        if (live && (live->pps || live->sps)) {
             //缓存，没有推流
             prepareVideo(buf, len, live);
         }
         return ret;
-
     }
-    //I帧  （关键帧）
+    //I帧  （关键帧）要带上sps、pps
     if (buf[4] == 0x65) {
-        LOGI("rtmp_发送sps、pps");
         //组装包，要带上sps、pps
         //先发sps、pps
         RTMPPacket *packet = createVideoPackage(live);
-        sendPacket(packet);
-
+        ret = sendPacket(packet);
+        LOGI("rtmp_发送sps、pps:%d",ret);
         //再发关键帧
     }
 
@@ -213,14 +206,6 @@ int sendVideo(int8_t *buf, int len, long tms) {
 
 
 extern "C" {
-JNIEXPORT jstring JNICALL
-Java_com_lyw_avmodule_MainActivity_stringFromJNI(
-        JNIEnv *env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
-}
-
 JNIEXPORT jboolean JNICALL
 Java_com_lyw_avmodule_ScreenLive_sendData(JNIEnv *env, jobject thiz, jbyteArray data_, jint len,
                                           jlong tms) {
