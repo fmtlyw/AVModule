@@ -32,6 +32,7 @@ public class ScreenLive extends Thread {
     private String url;
 
     private VideoCodeC videoCodeC;
+    private AudioCodeC audioCodeC;
 
     /**
      * 开始直播
@@ -47,6 +48,15 @@ public class ScreenLive extends Thread {
         Intent screenCaptureIntent = mProjectionManager.createScreenCaptureIntent();
         //要求返回结果
         mActivity.startActivityForResult(screenCaptureIntent, 200);
+    }
+
+
+    /**
+     * 结束直播
+     */
+    protected void stopLive(){
+        addPackage(RTMPPackage.EMPTY_PACKGE);
+        isLiving = false;
     }
 
 
@@ -84,9 +94,14 @@ public class ScreenLive extends Thread {
             return;
         }
         isLiving = true;
+
+        //视频采集编码
         videoCodeC = new VideoCodeC(this);
         videoCodeC.startLive(mMediaProjection);
 
+        //音频采集编码
+        audioCodeC = new AudioCodeC(this);
+        audioCodeC.startLive();
 
         //循环取数据
         while (isLiving) {
@@ -97,13 +112,21 @@ public class ScreenLive extends Thread {
                 e.printStackTrace();
             }
             if (rtmpPackage.getBuffer() != null && rtmpPackage.getBuffer().length != 0) {
-                sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer().length, rtmpPackage.getTms());
+                sendData(rtmpPackage.getBuffer(), rtmpPackage.getBuffer().length,rtmpPackage.getType(), rtmpPackage.getTms());
             }
         }
+
+        isLiving = false;
+        audioCodeC.stopLive();
+        videoCodeC.stopLive();
+        mQueue.clear();
+        disConnect();
     }
 
 
-    private native boolean sendData(byte[] data,int len,long tms);
+    private native boolean sendData(byte[] data,int len,int type,long tms);
 
     private native boolean connect(String url);
+
+    private native void disConnect();
 }

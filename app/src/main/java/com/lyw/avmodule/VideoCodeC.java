@@ -1,6 +1,5 @@
 package com.lyw.avmodule;
 
-import android.app.Notification;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaCodec;
@@ -100,6 +99,9 @@ public class VideoCodeC extends Thread{
                 timeStamp = System.currentTimeMillis();
             }
 
+            /***************************开始取数据封包********************************/
+
+
             //99号技师有没有空
             int index = mMediaCodec.dequeueOutputBuffer(bufferInfo, 10);
 
@@ -139,5 +141,15 @@ public class VideoCodeC extends Thread{
         mVirtualDisplay = null;
         mMediaProjection.stop();
         mMediaProjection = null;
+    }
+
+    public void stopLive(){
+        isLiving = false;
+        try {
+            //阻塞上一线程，让线程按顺序执行
+            join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

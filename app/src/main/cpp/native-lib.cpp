@@ -128,6 +128,31 @@ RTMPPacket *createVideoPackage(int8_t *buf, int len, long tms, Live *live) {
 }
 
 
+RTMPPacket *
+createAudioPacket(int8_t *buf, const int len, const int type, const long tms, Live *live) {
+    int body_size = len + 2;
+    RTMPPacket *packet = (RTMPPacket *) malloc(sizeof(RTMPPacket));
+    RTMPPacket_Alloc(packet, body_size);
+
+    packet->m_body[0] = 0xAF;
+    packet->m_body[1] = 0x01;
+
+    if (type == 1) {
+        packet->m_body[1] = 0x00;
+    }
+    memcpy(&packet->m_body[2], buf, len);
+
+    packet->m_packetType = RTMP_PACKET_TYPE_AUDIO;
+    packet->m_nBodySize = body_size;
+    packet->m_nChannel = 0x05;
+    packet->m_nTimeStamp = tms;
+    packet->m_hasAbsTimestamp = 0;
+    packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+    packet->m_nInfoField2 = live->rtmp->m_stream_id;
+    return packet;
+}
+
+
 /**
  * 发送关键帧
  * @param pPacket
@@ -142,7 +167,7 @@ int sendPacket(RTMPPacket *pPacket) {
 
 
 //    分隔符                     sps                                 pps
-//00 00 00 01 67     64001FACB405A0500290506060606DBA135    00 00 00 00 1 68 FF06F2C0
+//00 00 00 01 67     64001FACB405A0500290506060606DBA135    00 00 00 01 68 FF06F2C0
 void prepareVideo(int8_t *data, int len, Live *live) {
     for (int i = 0; i < len; i++) {
         //防止越界
@@ -151,7 +176,7 @@ void prepareVideo(int8_t *data, int len, Live *live) {
                 && data[i + 1] == 0x00
                 && data[i + 2] == 0x00
                 && data[i + 3] == 0x01) {
-                if(data[i + 4] == 0x68){
+                if (data[i + 4] == 0x68) {
                     live->sps_len = i - 4;
                     //new 一个数组
                     live->sps = static_cast<int8_t *>(malloc(live->sps_len));
@@ -174,6 +199,16 @@ void prepareVideo(int8_t *data, int len, Live *live) {
     }
 }
 
+int sendAudio(int8_t *buf, int len, int type, long tms) {
+    int ret = 0;
+    RTMPPacket *rtmpPacket = createAudioPacket(buf, len, type, tms, live);
+    ret = sendPacket(rtmpPacket);
+
+    LOGI("rtmp_发送sendAudio:%d", ret);
+    return ret;
+}
+
+
 int sendVideo(int8_t *buf, int len, long tms) {
     int ret = 0;
 
@@ -194,7 +229,7 @@ int sendVideo(int8_t *buf, int len, long tms) {
         //先发sps、pps
         RTMPPacket *packet = createVideoPackage(live);
         ret = sendPacket(packet);
-        LOGI("rtmp_发送sps、pps:%d",ret);
+        LOGI("rtmp_发送sps、pps:%d", ret);
         //再发关键帧
     }
 
@@ -208,15 +243,24 @@ int sendVideo(int8_t *buf, int len, long tms) {
 extern "C" {
 JNIEXPORT jboolean JNICALL
 Java_com_lyw_avmodule_ScreenLive_sendData(JNIEnv *env, jobject thiz, jbyteArray data_, jint len,
+                                          jint type,
                                           jlong tms) {
     //推流
     int ret;
     jbyte *data = env->GetByteArrayElements(data_, NULL);
 
-    ret = sendVideo(data, len, tms);
+    switch (type) {
+        case 0://video
+            ret = sendVideo(data, len, tms);
+            LOGI("rtmp_send_video");
+            break;
+        default://audio
+            ret = sendAudio(data, len, type, tms);
+            LOGI("rtmp_send_audio");
+            break;
 
+    }
     env->ReleaseByteArrayElements(data_, data, 0);
-
     return ret;
 }
 
@@ -255,5 +299,23 @@ Java_com_lyw_avmodule_ScreenLive_connect(JNIEnv *env, jobject thiz, jstring url_
     }
     env->ReleaseStringUTFChars(url_, url);
     return ret;
+}
+
+JNIEXPORT void JNICALL
+Java_com_lyw_avmodule_ScreenLive_disConnect(JNIEnv *env, jobject thiz) {
+    if (live) {
+        if (live->sps) {
+            free(live->sps);
+        }
+        if (live->pps) {
+            free(live->pps);
+        }
+        if (live->rtmp) {
+            RTMP_Close(live->rtmp);
+            RTMP_Free(live->rtmp);
+        }
+        free(live);
+        live = nullptr;
+    }
 }
 }

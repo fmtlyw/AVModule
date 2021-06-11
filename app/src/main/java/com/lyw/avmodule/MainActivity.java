@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+
 public class MainActivity extends AppCompatActivity {
 
     //直播地址
@@ -62,6 +63,10 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      */
     public void onStartPlay(View view){
+        if (!PermissionUtil.isHasRecordPermission(this)) {
+            PermissionUtil.requestRecordPermission(this);
+            return;
+        }
         String url = "rtmp://live-push.bilivideo.com/live-bvc/?streamname=live_1792239063_87501789&key=b9a0bfebde52671720a2b933f05973b5&schedule=rtmp&pflag=1";
         mScreenLive.startLive(this,url);
     }
@@ -71,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      */
     public void onStopPlay(View view) {
+        mScreenLive.stopLive();
     }
 
 
