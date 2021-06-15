@@ -18,12 +18,12 @@ public class FileUtils {
     /**
      * 将h264数据写入文件里
      *
-     * @param arrays
+     * @param arrays   name  视频：codec.h264  音频：music.aac
      */
-    public static void writeBytes(byte[] arrays) {
+    public static void writeBytes(byte[] arrays,String name) {
         FileOutputStream writer = null;
         try {
-            writer = new FileOutputStream(Environment.getExternalStorageDirectory() + "/codec.h264", true);
+            writer = new FileOutputStream(Environment.getExternalStorageDirectory() + "/" + name, true);
             writer.write(arrays);
             writer.write('\n');
         } catch (IOException e) {

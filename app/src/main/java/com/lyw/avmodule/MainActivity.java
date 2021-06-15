@@ -63,6 +63,11 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      */
     public void onStartPlay(View view){
+        if (!PermissionUtil.isHasSDCardWritePermission(this)) {
+            PermissionUtil.requestSDCardWrite(this);
+            return;
+        }
+
         if (!PermissionUtil.isHasRecordPermission(this)) {
             PermissionUtil.requestRecordPermission(this);
             return;

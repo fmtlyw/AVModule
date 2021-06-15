@@ -74,7 +74,7 @@ public class AudioCodeC extends Thread{
         MediaCodec.BufferInfo bufferInfo =  new MediaCodec.BufferInfo();
 
         while (isRecording){
-            int len = mAudioRecord.read(buffer,0,buffer.length);
+            int len = mAudioRecord.read(buffer,0,1024);
             if(len <= 0){
                 continue;
             }
@@ -83,7 +83,8 @@ public class AudioCodeC extends Thread{
             int index = mMediaCodec.dequeueInputBuffer(0);
             if(index >= 0){
                 ByteBuffer inputBuffer = mMediaCodec.getInputBuffer(index);
-                inputBuffer.clear();
+                inputBuffer.clear();////避免缓冲队列有冗余数据，先clear一下
+
                 inputBuffer.put(buffer,0,len);
                 //填充数据再加入队列
                 mMediaCodec.queueInputBuffer(index,0,len,System.nanoTime()/1000,0);
@@ -99,6 +100,8 @@ public class AudioCodeC extends Thread{
                     startTime = bufferInfo.presentationTimeUs / 1000;
                 }
                 outputBuffer.get(outData);
+
+//                FileUtils.writeBytes(outData,"music.pcm");
 
                 rtmpPackage = new RTMPPackage();
                 rtmpPackage.setBuffer(outData);

@@ -88,7 +88,10 @@ RTMPPacket *createVideoPackage(Live *live) {
  * 创建关键帧、非关键帧包
  */
 RTMPPacket *createVideoPackage(int8_t *buf, int len, long tms, Live *live) {
-    buf += 4;
+    buf += 4;//去掉分隔符
+    len -= 4;
+
+
     RTMPPacket *packet = (RTMPPacket *) malloc(sizeof(RTMPPacket));
     int body_size = len + 9;
     RTMPPacket_Alloc(packet, body_size);

@@ -114,7 +114,7 @@ public class VideoCodeC extends Thread{
                 outputBuffer.get(outData);
 
                 //把h264流数据写入文件，可通过ffmpeg的ffplay或者vlc播放
-                //FileUtils.writeBytes(outData);
+//                FileUtils.writeBytes(outData,"codec.h264");
 
                 if (startTime == 0) {
                     startTime = bufferInfo.presentationTimeUs / 1000;
